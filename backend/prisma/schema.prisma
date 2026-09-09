@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gym {
+  id                   Int      @id @default(autoincrement())
+  gymCode              String   @unique
+  name                 String
+  logo                 String?
+  coverImage           String?
+  accentColor          String   @default("#6366f1")
+  address              String?
+  phone                String?
+  email                String?
+  website              String?
+  description          String?
+  // Feature flags — JSON array of module keys members can access by default
+  defaultModules       String?  @default("[\"dashboard\",\"workout\",\"checkin\",\"progress\",\"badges\",\"membership\",\"events\"]")
+  // Allow members to self check-in by default
+  selfCheckInDefault   Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  users         User[]
+  equipment     Equipment[]
+  attendances   Attendance[]
+  memberships   Membership[]
+  progressLogs  ProgressLog[]
+  events        Event[]
+  notifications Notification[]
+  trainerSlots  TrainerSlot[]
+  announcements Announcement[]
+  loyaltyRules  LoyaltyRule[]
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  gymId           Int
+  email           String
+  username        String
+  passwordHash    String
+  role            String   @default("MEMBER")
+  firstName       String
+  lastName        String
+  phone              String?
+  avatar             String?
+  photoUrl           String?  // Profile photo (base64 or URL)
+  qrCode             String?
+  isActive           Boolean  @default(true)
+  referralCode       String?  @unique
+  referredBy         Int?
+  loyaltyPoints      Int      @default(0)
+  // Govt ID
+  govtIdType         String?  // AADHAR, PASSPORT, VOTER_ID, PAN, DRIVING_LICENSE
+  govtIdNumber       String?
+  // Feature access control (set by admin per user)
+  selfCheckInEnabled Boolean  @default(false)
+  enabledModules     String?  // JSON array — null means use gym defaults
+  // Security: login attempt tracking
+  loginAttempts      Int      @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  gym           Gym            @relation(fields: [gymId], references: [id])
+  profile       MemberProfile?
+  attendances   Attendance[]
+  memberships   Membership[]
+  progressLogs  ProgressLog[]
+  notifications Notification[]
+  trainerSlots  TrainerSlot[]  @relation("TrainerSlots")
+  bookedSlots   TrainerSlot[]  @relation("BookedSlots")
+  refreshTokens RefreshToken[]
+  loyaltyTxns   LoyaltyTransaction[]
+
+  @@unique([gymId, email])
+  @@unique([gymId, username])
+}
+
+// Persistent refresh token store for secure token rotation
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MemberProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  goals           String?
+  fitnessLevel    String?
+  injuries        String?
+  availableDays   String?
+  height          Float?
+  targetWeight    Float?
+  currentWeight   Float?
+  dateOfBirth     DateTime?
+  gender          String?
+  workoutPlan     String?
+  planGeneratedAt DateTime?
+  emergencyContact String?
+  bloodGroup      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model Equipment {
+  id           Int      @id @default(autoincrement())
+  gymId        Int
+  name         String
+  category     String
+  quantity     Int      @default(1)
+  condition    String   @default("GOOD")
+  purchaseDate DateTime?
+  imageUrl     String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  gym          Gym      @relation(fields: [gymId], references: [id])
+}
+
+model Membership {
+  id            Int      @id @default(autoincrement())
+  gymId         Int
+  userId        Int
+  planName      String
+  price         Float
+  startDate     DateTime
+  endDate       DateTime
+  status        String   @default("ACTIVE")
+  paymentMethod String?
+  notes         String?
+  isTrial       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  gym           Gym      @relation(fields: [gymId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Attendance {
+  id           Int      @id @default(autoincrement())
+  gymId        Int
+  userId       Int
+  checkInTime  DateTime @default(now())
+  checkOutTime DateTime?
+  method       String   @default("QR")
+
+  gym          Gym      @relation(fields: [gymId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model ProgressLog {
+  id          Int      @id @default(autoincrement())
+  gymId       Int
+  userId      Int
+  logDate     DateTime @default(now())
+  weight      Float?
+  bodyFat     Float?
+  chestCm     Float?
+  waistCm     Float?
+  hipsCm      Float?
+  armsCm      Float?
+  thighsCm    Float?
+  photoUrl    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  gym         Gym      @relation(fields: [gymId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  gymId       Int
+  title       String
+  description String?
+  eventDate   DateTime
+  type        String   @default("ANNOUNCEMENT")
+  imageUrl    String?
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  gym         Gym      @relation(fields: [gymId], references: [id])
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  gymId       Int
+  title       String
+  body        String
+  pinned      Boolean  @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  gym         Gym      @relation(fields: [gymId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  gymId     Int
+  userId    Int
+  title     String
+  message   String
+  type      String   @default("INFO")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Badge {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  gymId       Int
+  name        String
+  description String
+  icon        String
+  earnedAt    DateTime @default(now())
+}
+
+model TrainerSlot {
+  id        Int      @id @default(autoincrement())
+  gymId     Int
+  trainerId Int
+  memberId  Int?
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("AVAILABLE")
+  notes     String?
+  createdAt DateTime @default(now())
+
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  trainer   User     @relation("TrainerSlots", fields: [trainerId], references: [id])
+  member    User?    @relation("BookedSlots", fields: [memberId], references: [id])
+}
+
+model LoyaltyRule {
+  id          Int      @id @default(autoincrement())
+  gymId       Int
+  action      String   // CHECKIN, REFERRAL, ANNIVERSARY, MILESTONE
+  points      Int
+  description String
+  createdAt   DateTime @default(now())
+
+  gym         Gym      @relation(fields: [gymId], references: [id])
+}
+
+model LoyaltyTransaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  points      Int
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+}
