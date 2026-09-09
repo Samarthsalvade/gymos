@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(sleep 5 && cat /tmp/backend.log | tail -20)"
+      "Bash(sleep 5 && cat /tmp/backend.log | tail -20)",
+      "Bash(npx prisma *)"
     ]
   }
 }
