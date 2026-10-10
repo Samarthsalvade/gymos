@@ -25,11 +25,21 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-## Demo Login
+## Live demo
+- **App**: https://samarthsalvade.github.io/gymos/
+- **API**: https://gymos-api-azure.vercel.app
+- **Gym Code**: `DEMO01`
+- **Admin**: admin@fitzone.com / admin123
+- **Trainer**: trainer@fitzone.com / trainer123
+- **Member**: arjun@example.com / member123
+
+The site is on GitHub Pages. The API runs on Vercel’s free plan and uses the existing Neon Postgres database, also on the free plan. Nothing here requires a paid host. The first request after the database has been idle can take a few seconds while it wakes up.
+
+## Local demo
 - **URL**: http://localhost:5173
 - **Gym Code**: `DEMO01`
 - **Admin**: admin@fitzone.com / admin123
-- **Member**: john@fitzone.com / member123
+- **Member**: arjun@example.com / member123
 
 ## Enable AI Features
 Add your Gemini API key to `backend/.env`:

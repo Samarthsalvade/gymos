@@ -26,7 +26,7 @@ export async function create(req: Request, res: Response) {
 
 export async function remove(req: Request, res: Response) {
   const gymId = req.user!.gymId;
-  const id = parseInt(req.params.id);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
   await prisma.announcement.deleteMany({ where: { id, gymId } });
   res.json({ message: 'Deleted' });
 }

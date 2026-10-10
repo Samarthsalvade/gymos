@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import QRCode from 'qrcode';
 import prisma from '../utils/prisma';
 
@@ -85,7 +85,7 @@ export async function createMember(req: Request, res: Response) {
   const defaultModules = gym?.defaultModules || JSON.stringify(ALL_MODULES);
 
   const hash = await bcrypt.hash(password, 12);
-  const referralCode = uuidv4().slice(0, 8).toUpperCase();
+  const referralCode = randomUUID().slice(0, 8).toUpperCase();
 
   const user = await prisma.user.create({
     data: {

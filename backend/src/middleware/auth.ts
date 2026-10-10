@@ -47,7 +47,8 @@ export function requireRole(...roles: string[]) {
 // Prevents a user from accessing another gym's data by manipulating URLs.
 // Use on routes that accept a gymId param or query.
 export function requireSameGym(req: Request, res: Response, next: NextFunction) {
-  const paramGymId = parseInt(req.params.gymId || req.query.gymId as string);
+  const gymParam = Array.isArray(req.params.gymId) ? req.params.gymId[0] : req.params.gymId;
+  const paramGymId = parseInt(gymParam || (req.query.gymId as string));
   if (paramGymId && paramGymId !== req.user?.gymId) {
     res.status(403).json({ error: 'Access denied: cross-gym request' });
     return;
@@ -58,7 +59,9 @@ export function requireSameGym(req: Request, res: Response, next: NextFunction) 
 // ── Self-or-admin guard ───────────────────────────────────────────────────────
 // Prevents members from reading another member's data via userId in URL.
 export function requireSelfOrAdmin(req: Request, res: Response, next: NextFunction) {
-  const paramUserId = parseInt(req.params.id || req.params.userId);
+  const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const userParam = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+  const paramUserId = parseInt(idParam || userParam);
   const { userId, role } = req.user!;
   const isAdmin = ['ADMIN', 'MANAGER', 'SUPER_ADMIN', 'TRAINER'].includes(role);
   if (!isAdmin && paramUserId && paramUserId !== userId) {

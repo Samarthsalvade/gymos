@@ -12,6 +12,7 @@ import * as gym from '../controllers/gym.controller';
 import * as loyalty from '../controllers/loyalty.controller';
 import * as announcements from '../controllers/announcements.controller';
 import prisma from '../utils/prisma';
+import { remember } from '../utils/cache';
 
 const r = Router();
 
@@ -24,11 +25,17 @@ r.post('/auth/change-password', authenticate, auth.changePassword);
 
 // ── Gym lookup (public — for login step 1) ───────────────────────────────────
 r.get('/gym/lookup/:gymCode', async (req, res) => {
-  const gym = await prisma.gym.findUnique({
-    where: { gymCode: req.params.gymCode.toUpperCase() },
+  const gymCode = req.params.gymCode.toUpperCase();
+  const gym = await remember(`gym:${gymCode}`, 60_000, () => prisma.gym.findUnique({
+    where: { gymCode },
     select: { name: true, logo: true, coverImage: true, accentColor: true, gymCode: true },
-  });
-  if (!gym) { res.status(404).json({ error: 'Gym not found' }); return; }
+  }));
+  if (!gym) {
+    res.set('Cache-Control', 'no-store');
+    res.status(404).json({ error: 'Gym not found' });
+    return;
+  }
+  res.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
   res.json(gym);
 });
 

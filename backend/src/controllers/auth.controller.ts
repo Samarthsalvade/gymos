@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import QRCode from 'qrcode';
 import prisma from '../utils/prisma';
 
@@ -168,7 +168,7 @@ export async function registerGym(req: Request, res: Response) {
   if (existing) { res.status(409).json({ error: 'Gym code already taken' }); return; }
 
   const hash = await bcrypt.hash(adminPassword, 12);
-  const referralCode = uuidv4().slice(0, 8).toUpperCase();
+  const referralCode = randomUUID().slice(0, 8).toUpperCase();
 
   const gym = await prisma.gym.create({
     data: {

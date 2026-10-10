@@ -9,6 +9,9 @@ import routes from './routes';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Vercel sits in front of the API, so the client IP is on X-Forwarded-For.
+app.set('trust proxy', 1);
+
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -67,8 +70,13 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🏋️  GymOS API running at http://localhost:${PORT}`);
-  console.log(`🐘 Database: PostgreSQL`);
-  console.log(`🔒 Security: Helmet + Rate limiting active`);
-});
+export default app;
+
+// Vercel imports this file as a function. Listen only when running locally.
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🏋️  GymOS API running at http://localhost:${PORT}`);
+    console.log(`🐘 Database: PostgreSQL`);
+    console.log(`🔒 Security: Helmet + Rate limiting active`);
+  });
+}

@@ -24,7 +24,7 @@ import MemberMembership from './pages/member/MemberMembership';
 import MemberEvents from './pages/member/MemberEvents';
 import Notifications from './pages/Notifications';
 
-const qc = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30000 } } });
+const qc = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 60_000 } } });
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, tokens } = useAuthStore();
@@ -59,7 +59,7 @@ function BrandInit() {
 export default function App() {
   return (
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
         <BrandInit />
         <Toaster position="top-right" toastOptions={{ style: { background: '#ffffff', color: '#1d1d1f', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' } }} />
         <Routes>
